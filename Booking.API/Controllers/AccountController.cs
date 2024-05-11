@@ -13,7 +13,6 @@ namespace Booking.API.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    [AllowAnonymous]
     public class AccountController : ControllerBase
     {
         private readonly UserManager<User> _userManager;
@@ -30,6 +29,7 @@ namespace Booking.API.Controllers
         }
        
         [HttpPost("register")]
+        [AllowAnonymous]
         public async Task<ActionResult<UserResponse>> Register([FromBody] UserRegisterRequest registerRequest)
         {
             if (!ModelState.IsValid)
@@ -58,20 +58,20 @@ namespace Booking.API.Controllers
             }
 
             AuthenticationResponse authenticationResponse = _jwtService.CreateJwtToken(user);
-
+            
             user.RefreshToken = authenticationResponse.RefreshToken;
             user.RefreshTokenExpiryTime = authenticationResponse.RefreshTokenExpiration;
             await _userManager.UpdateAsync(user);
             
-            UserResponse userResponse = _mapper.Map<UserResponse>(user);
+            // UserResponse userResponse = _mapper.Map<UserResponse>(user);
+            //
+            // _mapper.Map(authenticationResponse, userResponse);
             
-            userResponse.Token = authenticationResponse.Token;
-            userResponse.TokenExpiration.ToString("yyyy-MM-ddTHH:mm:ss");
-            
-            return Ok(userResponse);
+            return Ok(authenticationResponse);
         }
         
         [HttpPost("login")]
+        [AllowAnonymous]
         public async Task<ActionResult<UserResponse>> Login([FromBody] UserLoginRequest userLoginRequest)
         {
             if (!ModelState.IsValid)
@@ -105,11 +105,14 @@ namespace Booking.API.Controllers
             user.RefreshTokenExpiryTime = authenticationResponse.RefreshTokenExpiration;
             await _userManager.UpdateAsync(user);
             
-            UserResponse userResponse = _mapper.Map<UserResponse>(user);
+            // UserResponse userResponse = _mapper.Map<UserResponse>(user);
+            //
+            // _mapper.Map(authenticationResponse, userResponse);
             
-            return Ok(userResponse);
+            return Ok(authenticationResponse);
         }
         
+        [Authorize]
         [HttpGet("logout")]
         public async Task<ActionResult> Logout()
         {
@@ -118,8 +121,14 @@ namespace Booking.API.Controllers
             return Ok();
         }
         
-        [HttpGet]
-        public async Task<IActionResult> IsEmailAlreadyRegistered(string email)
+        [HttpGet("test")]
+        [Authorize]
+        public IActionResult Test()
+        {
+            return Ok("Test");
+        }
+        
+        private async Task<IActionResult> IsEmailAlreadyRegistered(string email)
         {
             var user = await _userManager.FindByEmailAsync(email);
             
@@ -146,9 +155,9 @@ namespace Booking.API.Controllers
                 return BadRequest("Invalid token");
             }
             
-            string? email = claimsPrincipal.FindFirstValue(ClaimTypes.Email);
-            
-            var user = await _userManager.FindByEmailAsync(email);
+            string? userId = claimsPrincipal.FindFirstValue("Id");
+
+            var user = await _userManager.FindByIdAsync(userId);
             
             if (user is null 
                 || user.RefreshToken != tokenModel.RefreshToken

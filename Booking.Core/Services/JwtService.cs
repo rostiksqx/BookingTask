@@ -21,40 +21,45 @@ public class JwtService : IJwtService
     
     public AuthenticationResponse CreateJwtToken(User user)
     {
-        var expirationTime = DateTime.UtcNow.AddDays(_configuration.GetValue<int>("Jwt:ExpirationDays"));
+        var expiration = DateTime.UtcNow.AddMinutes(Convert.ToDouble(_configuration["Jwt:EXPIRATION_MINUTES"]));
 
         Claim[] claims = new Claim[]
         {
-            new Claim("Id", user.Id.ToString()),
-            new Claim("Email", user.Email.ToString()),
-            new Claim("UserName", user.UserName.ToString()),
+            new Claim(JwtRegisteredClaimNames.Sub, user.Id.ToString()),
+            new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
+            new Claim(JwtRegisteredClaimNames.Iat, DateTimeOffset.UtcNow.ToUnixTimeSeconds().ToString()),
+            new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
+            new Claim(ClaimTypes.Email, user.Email.ToString()),
+            new Claim(ClaimTypes.Name, user.UserName.ToString()),
         };
-        
-        SymmetricSecurityKey key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configuration["Jwt:SymmetricSecurityKey"]));
-        
-        SigningCredentials credentials = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
-        
+
+        SymmetricSecurityKey securityKey =
+            new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configuration["Jwt:Key"]));
+
+        SigningCredentials signingCredentials = new SigningCredentials(securityKey, SecurityAlgorithms.HmacSha256);
+
         JwtSecurityToken tokenGenerator = new JwtSecurityToken(
             _configuration["Jwt:Issuer"],
             _configuration["Jwt:Audience"],
             claims,
-            expires: expirationTime,
-            signingCredentials: credentials
+            expires: expiration,
+            signingCredentials: signingCredentials
         );
         
         JwtSecurityTokenHandler tokenHandler = new JwtSecurityTokenHandler();
         string token = tokenHandler.WriteToken(tokenGenerator);
-
+        
         return new AuthenticationResponse
         {
             Username = user.UserName,
             Email = user.Email,
             Token = token,
+            Expiration = expiration,
             RefreshToken = GenerateRefreshToken(),
-            RefreshTokenExpiration = DateTime.UtcNow.AddDays(_configuration.GetValue<int>("Jwt:ExpirationDays"))
+            RefreshTokenExpiration = DateTime.Now.AddMinutes(Convert.ToDouble(_configuration["RefreshToken:EXPIRATION_MINUTES"]))
         };
     }
-
+    
     public ClaimsPrincipal? GetPrincipalFromExpiredToken(string? token)
     {
         var tokenValidationParameters = new TokenValidationParameters()
@@ -65,35 +70,28 @@ public class JwtService : IJwtService
             ValidIssuer = _configuration["Jwt:Issuer"],
 
             ValidateIssuerSigningKey = true,
-            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configuration["Jwt:SymmetricSecurityKey"])),
+            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configuration["Jwt:Key"])),
             ValidateLifetime = false
         };
-        
+
         JwtSecurityTokenHandler tokenHandler = new JwtSecurityTokenHandler();
-        
-        try
+
+        ClaimsPrincipal principal = tokenHandler.ValidateToken(token, tokenValidationParameters, out SecurityToken securityToken);
+
+        if (securityToken is not JwtSecurityToken jwtSecurityToken 
+            || !jwtSecurityToken.Header.Alg.Equals(SecurityAlgorithms.HmacSha256, StringComparison.InvariantCultureIgnoreCase))
         {
-            ClaimsPrincipal principal = tokenHandler.ValidateToken(token, tokenValidationParameters, out var securityToken);
-            
-            if (securityToken is not JwtSecurityToken jwtSecurityToken 
-                || !jwtSecurityToken.Header.Alg.Equals(SecurityAlgorithms.HmacSha256, StringComparison.InvariantCultureIgnoreCase))
-            {
-                throw new SecurityTokenException("Invalid token");
-            }
-            
-            return principal;
+            throw new SecurityTokenException("Invalid token");
         }
-        catch
-        {
-            return null;
-        }
+
+        return principal;
     }
-    
+
     private string GenerateRefreshToken()
     {
-        var randomNumber = new byte[64];
-        var rng = RandomNumberGenerator.Create();
-        rng.GetBytes(randomNumber);
-        return Convert.ToBase64String(randomNumber);
+        byte[] bytes = new byte[64];
+        var randomNumberGenerator = RandomNumberGenerator.Create();
+        randomNumberGenerator.GetBytes(bytes);
+        return Convert.ToBase64String(bytes);
     }
 }

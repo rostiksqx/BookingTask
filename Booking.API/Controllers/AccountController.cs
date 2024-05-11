@@ -30,7 +30,7 @@ namespace Booking.API.Controllers
        
         [HttpPost("register")]
         [AllowAnonymous]
-        public async Task<ActionResult<UserResponse>> Register([FromBody] UserRegisterRequest registerRequest)
+        public async Task<ActionResult<AuthenticationResponse>> Register([FromBody] UserRegisterRequest registerRequest)
         {
             if (!ModelState.IsValid)
             {
@@ -63,16 +63,12 @@ namespace Booking.API.Controllers
             user.RefreshTokenExpiryTime = authenticationResponse.RefreshTokenExpiration;
             await _userManager.UpdateAsync(user);
             
-            // UserResponse userResponse = _mapper.Map<UserResponse>(user);
-            //
-            // _mapper.Map(authenticationResponse, userResponse);
-            
             return Ok(authenticationResponse);
         }
         
         [HttpPost("login")]
         [AllowAnonymous]
-        public async Task<ActionResult<UserResponse>> Login([FromBody] UserLoginRequest userLoginRequest)
+        public async Task<ActionResult<AuthenticationResponse>> Login([FromBody] UserLoginRequest userLoginRequest)
         {
             if (!ModelState.IsValid)
             {
@@ -105,10 +101,6 @@ namespace Booking.API.Controllers
             user.RefreshTokenExpiryTime = authenticationResponse.RefreshTokenExpiration;
             await _userManager.UpdateAsync(user);
             
-            // UserResponse userResponse = _mapper.Map<UserResponse>(user);
-            //
-            // _mapper.Map(authenticationResponse, userResponse);
-            
             return Ok(authenticationResponse);
         }
         
@@ -119,13 +111,6 @@ namespace Booking.API.Controllers
             await _signInManager.SignOutAsync();
             
             return Ok();
-        }
-        
-        [HttpGet("test")]
-        [Authorize]
-        public IActionResult Test()
-        {
-            return Ok("Test");
         }
         
         private async Task<IActionResult> IsEmailAlreadyRegistered(string email)

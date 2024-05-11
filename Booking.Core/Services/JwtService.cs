@@ -51,6 +51,7 @@ public class JwtService : IJwtService
         
         return new AuthenticationResponse
         {
+            Id = user.Id,
             Username = user.UserName,
             Email = user.Email,
             Token = token,

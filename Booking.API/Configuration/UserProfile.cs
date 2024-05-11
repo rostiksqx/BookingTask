@@ -10,7 +10,5 @@ public class UserProfile : Profile
     public UserProfile()
     {
         CreateMap<UserRegisterRequest, User>();
-        CreateMap<User, UserResponse>();
-        CreateMap<AuthenticationResponse, UserResponse>();
     }
 }

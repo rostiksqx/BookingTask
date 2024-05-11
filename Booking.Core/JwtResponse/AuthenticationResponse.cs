@@ -1,4 +1,6 @@
-﻿namespace Booking.Core.JwtResponse;
+﻿using Booking.Core.Models;
+
+namespace Booking.Core.JwtResponse;
 
 public class AuthenticationResponse
 {

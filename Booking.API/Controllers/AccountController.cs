@@ -140,9 +140,9 @@ namespace Booking.API.Controllers
                 return BadRequest("Invalid token");
             }
             
-            string? userId = claimsPrincipal.FindFirstValue("Id");
+            string? email = claimsPrincipal.FindFirstValue(ClaimTypes.Email);
 
-            var user = await _userManager.FindByIdAsync(userId);
+            var user = await _userManager.FindByEmailAsync(email);
             
             if (user is null 
                 || user.RefreshToken != tokenModel.RefreshToken

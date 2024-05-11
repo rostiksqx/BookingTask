@@ -21,7 +21,7 @@ public class JwtService : IJwtService
     
     public AuthenticationResponse CreateJwtToken(User user)
     {
-        var expiration = DateTime.UtcNow.AddMinutes(Convert.ToDouble(_configuration["Jwt:EXPIRATION_MINUTES"]));
+        var expiration = DateTime.UtcNow.AddDays(Convert.ToDouble(_configuration["Jwt:EXPIRATION_DAYS"]));
 
         Claim[] claims = new Claim[]
         {
@@ -57,7 +57,7 @@ public class JwtService : IJwtService
             Token = token,
             Expiration = expiration,
             RefreshToken = GenerateRefreshToken(),
-            RefreshTokenExpiration = DateTime.Now.AddMinutes(Convert.ToDouble(_configuration["RefreshToken:EXPIRATION_MINUTES"]))
+            RefreshTokenExpiration = DateTime.Now.AddDays(Convert.ToDouble(_configuration["RefreshToken:EXPIRATION_DAYS"]))
         };
     }
     

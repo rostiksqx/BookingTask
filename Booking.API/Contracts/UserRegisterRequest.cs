@@ -12,6 +12,10 @@ public class UserRegisterRequest
     [EmailAddress(ErrorMessage = "Email should be in proper email address format")]
     [Remote(action: "IsEmailAlreadyRegistered", controller: "Account", ErrorMessage = "Email is already in use")]
     public string Email { get; set; } = string.Empty;
+    
+    [Required(ErrorMessage = "Phone Number can't be blank")]
+    [Phone(ErrorMessage = "Phone number should be in proper phone number format")]
+    public string PhoneNumber { get; set; } = string.Empty;
 
     [Required(ErrorMessage = "Password can't be blank")]
     public string Password { get; set; } = string.Empty;

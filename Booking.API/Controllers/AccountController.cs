@@ -1,6 +1,7 @@
 using System.Security.Claims;
 using AutoMapper;
 using Booking.API.Contracts;
+using Booking.Core.Enums;
 using Booking.Core.Interfaces;
 using Booking.Core.JwtResponse;
 using Booking.Core.Models;
@@ -19,13 +20,18 @@ namespace Booking.API.Controllers
         private readonly SignInManager<User> _signInManager;
         private readonly IJwtService _jwtService;
         private readonly IMapper _mapper;
+        private readonly RoleManager<IdentityRole<Guid>> _roleManager;
 
-        public AccountController(UserManager<User> userManager, SignInManager<User> signInManager, IJwtService jwtService, IMapper mapper)
+        public AccountController(UserManager<User> userManager, SignInManager<User> signInManager, 
+            IJwtService jwtService, 
+            IMapper mapper,
+            RoleManager<IdentityRole<Guid>> roleManager)
         {
             _userManager = userManager;
             _signInManager = signInManager;
             _jwtService = jwtService;
             _mapper = mapper;
+            _roleManager = roleManager;
         }
        
         [HttpPost("register")]
@@ -56,6 +62,16 @@ namespace Booking.API.Controllers
                 
                 return BadRequest(new { message = errorMessage });
             }
+            
+            if (await _roleManager.FindByNameAsync(UserRoleOptions.User.ToString()) is null)
+            {
+                var applicationRole = new IdentityRole<Guid>()
+                {
+                    Name = UserRoleOptions.User.ToString(),
+                };
+                await _roleManager.CreateAsync(applicationRole);
+            }
+            await _userManager.AddToRoleAsync(user, UserRoleOptions.User.ToString());
 
             AuthenticationResponse authenticationResponse = _jwtService.CreateJwtToken(user);
             

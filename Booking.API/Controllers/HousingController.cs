@@ -47,7 +47,7 @@ namespace Booking.API.Controllers
             return Ok(housingResponse);
         }
         
-        [Authorize]
+        [Authorize(Roles = "Admin")]
         [HttpPost]
         public async Task<ActionResult<HousingResponse>> Create(HousingRequest housingRequest)
         {
@@ -60,7 +60,7 @@ namespace Booking.API.Controllers
             return CreatedAtAction(nameof(GetById), new { id = housingResponse.Id }, housingResponse);
         }
         
-        [Authorize]
+        [Authorize(Roles = "Admin")]
         [HttpPut("{id:guid}")]
         public async Task<ActionResult<HousingResponse>> Update(Guid id, HousingRequest housingRequest)
         {
@@ -80,7 +80,7 @@ namespace Booking.API.Controllers
             return Ok(housingResponse);
         }
         
-        [Authorize]
+        [Authorize(Roles = "Admin")]
         [HttpDelete("{id:guid}")]
         public async Task<ActionResult> Delete(Guid id)
         {

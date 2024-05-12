@@ -75,7 +75,8 @@ builder.Services.AddIdentity<User, IdentityRole<Guid>>(options =>
     })
     .AddEntityFrameworkStores<BookingDbContext>()
     .AddDefaultTokenProviders()
-    .AddUserStore<UserStore<User, IdentityRole<Guid>, BookingDbContext, Guid>>();
+    .AddUserStore<UserStore<User, IdentityRole<Guid>, BookingDbContext, Guid>>()
+    .AddRoleStore<RoleStore<IdentityRole<Guid>, BookingDbContext, Guid>>();
 
 builder.Services.AddAuthentication(options =>
     {

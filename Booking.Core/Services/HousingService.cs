@@ -38,6 +38,20 @@ public class HousingService : IHousingService
     
     public async Task Delete(Housing housing)
     {
+        if (housing.UserId != null)
+        {
+            var user = await _userManager.FindByIdAsync(housing.UserId.ToString());
+            
+            if (user == null)
+            {
+                return;
+            }
+            
+            user.HousingId = null;
+            user.Housing = null;
+            await _userManager.UpdateAsync(user);
+        }
+        
         await _housingRepository.Delete(housing);
     }
     

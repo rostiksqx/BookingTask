@@ -3,102 +3,132 @@ using Booking.Core.Interfaces;
 using Booking.Core.Models;
 using Microsoft.AspNetCore.Identity;
 
-namespace Booking.Core.Services;
-
-public class HousingService : IHousingService
+namespace Booking.Core.Services
 {
-    private readonly IHousingRepository _housingRepository;
-    private readonly UserManager<User> _userManager;
+    public class HousingService : IHousingService
+    {
+        // Define the necessary repository and manager
+        private readonly IHousingRepository _housingRepository;
+        private readonly UserManager<User> _userManager;
 
-    public HousingService(IHousingRepository housingRepository, UserManager<User> userManager)
-    {
-        _housingRepository = housingRepository;
-        _userManager = userManager;
-    }
-    
-    public async Task<List<Housing>> GetAll()
-    {
-        return await _housingRepository.GetAll();
-    }
-    
-    public async Task<Housing?> GetById(Guid id)
-    {
-        return await _housingRepository.GetById(id);
-    }
-    
-    public async Task<Housing> Create(Housing housing)
-    {
-        return await _housingRepository.Add(housing);
-    }
-    
-    public async Task<Housing> Update(Housing housing)
-    {
-        return await _housingRepository.Update(housing);
-    }
-    
-    public async Task Delete(Housing housing)
-    {
-        if (housing.UserId != null)
+        // Inject the repository and manager in the constructor
+        public HousingService(IHousingRepository housingRepository, UserManager<User> userManager)
         {
-            var user = await _userManager.FindByIdAsync(housing.UserId.ToString());
-            
+            _housingRepository = housingRepository;
+            _userManager = userManager;
+        }
+
+        // Get all housings
+        public async Task<List<Housing>> GetAll()
+        {
+            return await _housingRepository.GetAll();
+        }
+
+        // Get a housing by id
+        public async Task<Housing?> GetById(Guid id)
+        {
+            return await _housingRepository.GetById(id);
+        }
+
+        // Create a new housing
+        public async Task<Housing> Create(Housing housing)
+        {
+            return await _housingRepository.Add(housing);
+        }
+
+        // Update a housing
+        public async Task<Housing> Update(Housing housing)
+        {
+            return await _housingRepository.Update(housing);
+        }
+
+        // Delete a housing
+        public async Task Delete(Housing housing)
+        {
+            // If the housing is booked
+            if (housing.UserId != null)
+            {
+                // Fetch the user from the manager
+                var user = await _userManager.FindByIdAsync(housing.UserId.ToString());
+
+                // If the user doesn't exist, return
+                if (user == null)
+                {
+                    return;
+                }
+
+                // Unbook the housing for the user
+                user.HousingId = null;
+                user.Housing = null;
+                await _userManager.UpdateAsync(user);
+            }
+
+            // Delete the housing from the repository
+            await _housingRepository.Delete(housing);
+        }
+
+        // Book a housing
+        public async Task Book(Housing housing, Guid userId)
+        {
+            // Fetch the user from the manager
+            var user = await _userManager.FindByIdAsync(userId.ToString());
+
+            // If the user doesn't exist, return
             if (user == null)
             {
                 return;
             }
-            
-            user.HousingId = null;
+
+            // Book the housing for the user
+            housing.IsBooked = true;
+            housing.UserId = userId;
+            housing.User = user;
+
+            // Update the user's housing
+            user.HousingId = housing.Id;
+            user.Housing = housing;
+            await _userManager.UpdateAsync(user);
+            await _housingRepository.Update(housing);
+        }
+
+        // Unbook a housing
+        public async Task UnBook(Housing housing, Guid userId)
+        {
+            // Fetch the user from the manager
+            var user = await _userManager.FindByIdAsync(userId.ToString());
+
+            // If the user doesn't exist, return
+            if (user == null)
+            {
+                return;
+            }
+
+            // Unbook the housing for the user
+            housing.IsBooked = false;
+            housing.UserId = null;
+            housing.User = null;
+
+            // Update the user's housing
+            user!.HousingId = null;
             user.Housing = null;
             await _userManager.UpdateAsync(user);
+            await _housingRepository.Update(housing);
         }
-        
-        await _housingRepository.Delete(housing);
-    }
-    
-    public async Task Book(Housing housing, Guid userId)
-    {
-        var user = await _userManager.FindByIdAsync(userId.ToString());
-        
-        if (user == null)
-        {
-            return;
-        }
-        
-        housing.IsBooked = true;
-        housing.UserId = userId;
-        housing.User = user;
-        
-        user.HousingId = housing.Id;
-        user.Housing = housing;
-        await _userManager.UpdateAsync(user);
-        await _housingRepository.Update(housing);
-    }
 
-    public async Task UnBook(Housing housing, Guid userId)
-    {
-        var user = await _userManager.FindByIdAsync(userId.ToString());
-        
-        if (user == null)
+        // Get the user id from a token
+        public Guid GetUserIdFromToken(string token)
         {
-            return;
-        }
-        
-        housing.IsBooked = false;
-        housing.UserId = null;
-        housing.User = null;
-        
-        user!.HousingId = null;
-        user.Housing = null;
-        await _userManager.UpdateAsync(user);
-        await _housingRepository.Update(housing);
-    }
+            // Create a new JWT handler
+            var handler = new JwtSecurityTokenHandler();
 
-    public Guid GetUserIdFromToken(string token)
-    {
-        var handler = new JwtSecurityTokenHandler();
-        var jwtToken = handler.ReadJwtToken(token);
-        var userId = jwtToken.Claims.First(claim => claim.Type == "sub").Value;
-        
-        return Guid.Parse(userId);
+            // Read the JWT token
+            var jwtToken = handler.ReadJwtToken(token);
+
+            // Get the user id from the token
+            var userId = jwtToken.Claims.First(claim => claim.Type == "sub").Value;
+
+            // Return the user id
+            return Guid.Parse(userId);
+        }
     }
 }

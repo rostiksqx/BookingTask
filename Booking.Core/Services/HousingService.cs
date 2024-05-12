@@ -2,7 +2,6 @@
 using Booking.Core.Interfaces;
 using Booking.Core.Models;
 using Microsoft.AspNetCore.Identity;
-using Microsoft.AspNetCore.Mvc;
 
 namespace Booking.Core.Services;
 
@@ -42,26 +41,41 @@ public class HousingService : IHousingService
         await _housingRepository.Delete(housing);
     }
     
-    public async Task Book(Guid id, Guid userId)
+    public async Task Book(Housing housing, Guid userId)
     {
-        var housing = await _housingRepository.GetById(id);
         var user = await _userManager.FindByIdAsync(userId.ToString());
         
-        housing!.IsBooked = true;
+        if (user == null)
+        {
+            return;
+        }
+        
+        housing.IsBooked = true;
         housing.UserId = userId;
         housing.User = user;
         
+        user.HousingId = housing.Id;
+        user.Housing = housing;
+        await _userManager.UpdateAsync(user);
         await _housingRepository.Update(housing);
     }
 
-    public async Task UnBook(Guid id, Guid userId)
+    public async Task UnBook(Housing housing, Guid userId)
     {
-        var housing = await _housingRepository.GetById(id);
+        var user = await _userManager.FindByIdAsync(userId.ToString());
         
-        housing!.IsBooked = false;
+        if (user == null)
+        {
+            return;
+        }
+        
+        housing.IsBooked = false;
         housing.UserId = null;
         housing.User = null;
         
+        user!.HousingId = null;
+        user.Housing = null;
+        await _userManager.UpdateAsync(user);
         await _housingRepository.Update(housing);
     }
 

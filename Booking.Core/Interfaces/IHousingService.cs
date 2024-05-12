@@ -11,9 +11,9 @@ public interface IHousingService
     Task<Housing> Update(Housing housing);
     Task Delete(Housing housing);
     
-    Task Book(Guid id, Guid userId);
+    Task Book(Housing housing, Guid userId);
     
-    Task UnBook(Guid id, Guid userId);
+    Task UnBook(Housing housing, Guid userId);
 
     Guid GetUserIdFromToken(string token);
 }

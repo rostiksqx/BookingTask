@@ -19,9 +19,9 @@ public class BookingDbContext : IdentityDbContext<User, IdentityRole<Guid>, Guid
 
         modelBuilder.Entity<User>(entity =>
         {
-            entity.HasMany(u => u.Housings)
+            entity.HasOne(u => u.Housing)
                 .WithOne(h => h.User)
-                .HasForeignKey(h => h.UserId);
+                .HasForeignKey<Housing>(h => h.UserId);
         });
 
         modelBuilder.Entity<Housing>(entity =>
@@ -35,8 +35,8 @@ public class BookingDbContext : IdentityDbContext<User, IdentityRole<Guid>, Guid
             entity.Property(h => h.IsBooked).IsRequired();
             
             entity.HasOne(h => h.User)
-                .WithMany(u => u!.Housings)
-                .HasForeignKey(h => h.UserId);
+                .WithOne(u => u!.Housing)
+                .HasForeignKey<Housing>(h => h.UserId);
         });
     }
 }

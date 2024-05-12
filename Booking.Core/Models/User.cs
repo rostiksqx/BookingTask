@@ -8,5 +8,7 @@ public class User : IdentityUser<Guid>
     
     public DateTime RefreshTokenExpiryTime { get; set; }
     
-    public ICollection<Housing> Housings { get; set; } = new List<Housing>();
+    public Guid? HousingId { get; set; }
+    
+    public Housing? Housing { get; set; }
 }

@@ -120,7 +120,7 @@ namespace Booking.API.Controllers
                     return BadRequest("Housing is already booked");
                 }
                 
-                await _housingService.Book(id, userId);
+                await _housingService.Book(housing, userId);
                 
                 return NoContent();
             }
@@ -152,7 +152,7 @@ namespace Booking.API.Controllers
                     return BadRequest("Housing is not booked by you");
                 }
                 
-                await _housingService.UnBook(id, userId);
+                await _housingService.UnBook(housing, userId);
                
                 return NoContent();
             }

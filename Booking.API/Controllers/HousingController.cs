@@ -2,6 +2,7 @@ using AutoMapper;
 using Booking.API.Contracts;
 using Booking.Core.Models;
 using Booking.Core.Services;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
@@ -46,6 +47,7 @@ namespace Booking.API.Controllers
             return Ok(housingResponse);
         }
         
+        [Authorize]
         [HttpPost]
         public async Task<ActionResult<HousingResponse>> Create(HousingRequest housingRequest)
         {
@@ -58,6 +60,7 @@ namespace Booking.API.Controllers
             return CreatedAtAction(nameof(GetById), new { id = housingResponse.Id }, housingResponse);
         }
         
+        [Authorize]
         [HttpPut("{id:guid}")]
         public async Task<ActionResult<HousingResponse>> Update(Guid id, HousingRequest housingRequest)
         {
@@ -77,6 +80,7 @@ namespace Booking.API.Controllers
             return Ok(housingResponse);
         }
         
+        [Authorize]
         [HttpDelete("{id:guid}")]
         public async Task<ActionResult> Delete(Guid id)
         {
@@ -90,6 +94,70 @@ namespace Booking.API.Controllers
             await _housingService.Delete(housing);
             
             return NoContent();
+        }
+        
+        [Authorize]
+        [HttpPut("{id:guid}/book")]
+        public async Task<ActionResult> Book(Guid id)
+        {
+            string? authHeader = Request.Headers["Authorization"];
+            
+            if (authHeader != null && authHeader.StartsWith("Bearer "))
+            {
+                string token = authHeader.Substring("Bearer ".Length).Trim();
+                
+                Guid userId = _housingService.GetUserIdFromToken(token);
+                
+                var housing = await _housingService.GetById(id);
+                
+                if (housing == null)
+                {
+                    return NotFound("Housing not found");
+                }
+                
+                if (housing.UserId != null)
+                {
+                    return BadRequest("Housing is already booked");
+                }
+                
+                await _housingService.Book(id, userId);
+                
+                return NoContent();
+            }
+            
+            return Unauthorized();
+        }
+        
+        [Authorize]
+        [HttpPut("{id:guid}/unBook")]
+        public async Task<ActionResult> UnBook(Guid id)
+        {
+            string? authHeader = Request.Headers["Authorization"];
+            
+            if (authHeader != null && authHeader.StartsWith("Bearer "))
+            {
+                string token = authHeader.Substring("Bearer ".Length).Trim();
+                
+                Guid userId = _housingService.GetUserIdFromToken(token);
+                
+                var housing = await _housingService.GetById(id);
+                
+                if (housing == null)
+                {
+                    return NotFound("Housing not found");
+                }
+                
+                if (housing.UserId != userId)
+                {
+                    return BadRequest("Housing is not booked by you");
+                }
+                
+                await _housingService.UnBook(id, userId);
+               
+                return NoContent();
+            }
+            
+            return Unauthorized();
         }
     }
 }

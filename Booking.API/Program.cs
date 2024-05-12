@@ -4,6 +4,7 @@ using Booking.Core.Interfaces;
 using Booking.Core.Models;
 using Booking.Core.Services;
 using Booking.Data;
+using Booking.Data.Repositories;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
@@ -58,6 +59,9 @@ builder.Services.AddDbContext<BookingDbContext>(options =>
 });
 
 builder.Services.AddTransient<IJwtService, JwtService>();
+builder.Services.AddTransient<IHousingService, HousingService>();
+
+builder.Services.AddTransient<IHousingRepository, HousingRepository>();
 
 builder.Services.AddIdentity<User, IdentityRole<Guid>>(options =>
     {

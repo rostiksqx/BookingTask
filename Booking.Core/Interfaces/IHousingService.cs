@@ -1,4 +1,5 @@
 ﻿using Booking.Core.Models;
+using Microsoft.AspNetCore.Mvc;
 
 namespace Booking.Core.Services;
 
@@ -9,4 +10,10 @@ public interface IHousingService
     Task<Housing> Create(Housing housing);
     Task<Housing> Update(Housing housing);
     Task Delete(Housing housing);
+    
+    Task Book(Guid id, Guid userId);
+    
+    Task UnBook(Guid id, Guid userId);
+
+    Guid GetUserIdFromToken(string token);
 }

@@ -9,8 +9,4 @@ public class HousingRequest
     public int Rooms { get; set; }
 
     public string Address { get; set; }
-
-    public bool IsBooked { get; set; }
-    
-    public Guid UserId { get; set; }
 }

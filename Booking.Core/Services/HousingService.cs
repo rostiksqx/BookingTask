@@ -1,15 +1,20 @@
-﻿using Booking.Core.Interfaces;
+﻿using System.IdentityModel.Tokens.Jwt;
+using Booking.Core.Interfaces;
 using Booking.Core.Models;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Mvc;
 
 namespace Booking.Core.Services;
 
 public class HousingService : IHousingService
 {
     private readonly IHousingRepository _housingRepository;
+    private readonly UserManager<User> _userManager;
 
-    public HousingService(IHousingRepository housingRepository)
+    public HousingService(IHousingRepository housingRepository, UserManager<User> userManager)
     {
         _housingRepository = housingRepository;
+        _userManager = userManager;
     }
     
     public async Task<List<Housing>> GetAll()
@@ -35,5 +40,37 @@ public class HousingService : IHousingService
     public async Task Delete(Housing housing)
     {
         await _housingRepository.Delete(housing);
+    }
+    
+    public async Task Book(Guid id, Guid userId)
+    {
+        var housing = await _housingRepository.GetById(id);
+        var user = await _userManager.FindByIdAsync(userId.ToString());
+        
+        housing!.IsBooked = true;
+        housing.UserId = userId;
+        housing.User = user;
+        
+        await _housingRepository.Update(housing);
+    }
+
+    public async Task UnBook(Guid id, Guid userId)
+    {
+        var housing = await _housingRepository.GetById(id);
+        
+        housing!.IsBooked = false;
+        housing.UserId = null;
+        housing.User = null;
+        
+        await _housingRepository.Update(housing);
+    }
+
+    public Guid GetUserIdFromToken(string token)
+    {
+        var handler = new JwtSecurityTokenHandler();
+        var jwtToken = handler.ReadJwtToken(token);
+        var userId = jwtToken.Claims.First(claim => claim.Type == "sub").Value;
+        
+        return Guid.Parse(userId);
     }
 }

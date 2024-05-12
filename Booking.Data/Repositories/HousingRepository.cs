@@ -39,15 +39,7 @@ public class HousingRepository : IHousingRepository
     
     public async Task<Housing> Update(Housing housing)
     {
-        await _dbContext.Housings
-            .Where(h => h.Id == housing.Id)
-            .ExecuteUpdateAsync(s => s
-                .SetProperty(h => h.Name, h => housing.Name)
-                .SetProperty(h => h.Description, h => housing.Description)
-                .SetProperty(h => h.Rooms, h => housing.Rooms)
-                .SetProperty(h => h.Address, h => housing.Address)
-                .SetProperty(h => h.IsBooked, h => housing.IsBooked));
-
+        _dbContext.Housings.Update(housing);
         await _dbContext.SaveChangesAsync();
         
         return housing;

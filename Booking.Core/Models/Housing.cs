@@ -2,6 +2,11 @@
 
 public class Housing
 {
+    public Housing()
+    {
+        IsBooked = false;
+    }
+    
     public Guid Id { get; init; }
 
     public string Name { get; init; }
@@ -12,9 +17,9 @@ public class Housing
 
     public string Address { get; init; }
 
-    public bool IsBooked { get; init; }
+    public bool IsBooked { get; set; }
 
-    public User? User { get; init; }
+    public User? User { get; set; }
 
-    public Guid? UserId { get; init; }
+    public Guid? UserId { get; set; }
 }

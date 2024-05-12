@@ -10,5 +10,9 @@ public class UserProfile : Profile
     public UserProfile()
     {
         CreateMap<UserRegisterRequest, User>();
+        CreateMap<HousingRequest, Housing>();
+        CreateMap<Housing, HousingResponse>();
+        CreateMap<HousingResponse, Housing>();
+        CreateMap<User, UserResponse>();
     }
 }

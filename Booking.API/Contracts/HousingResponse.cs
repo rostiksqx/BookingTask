@@ -14,5 +14,5 @@ public class HousingResponse
 
     public bool IsBooked { get; init; }
     
-    public Guid? UserId { get; init; }
+    public UserResponse? User { get; init; }
 }
